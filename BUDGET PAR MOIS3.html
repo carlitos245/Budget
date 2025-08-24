@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Budget dynamique graphique et PDF</title>
+
+  <!-- 📦 Librairies externes -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <!-- 🎨 Styles CSS -->
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background-color: #f9f9f9; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 10px; text-align: center; }
+    select, input[type="number"] { padding: 5px; font-size: 14px; width: 90%; }
+    h2, h3 { color: #333; text-align: center; }
+    .form-section { margin-bottom: 20px; }
+    #totalDisplay { font-weight: bold; margin-top: 15px; font-size: 16px; }
+    button { margin-top: 10px; margin-right: 10px; padding: 8px 12px; font-size: 14px; }
+    canvas { max-width: 500px; margin: 20px auto; display: block; }
+    #totalDisplay.negative { color: red; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  <!-- 🧾 Formulaire de saisie -->
+  <h2>💼 Gestion des dépenses</h2>
+  <div class="form-section">
+    <label for="revenu">Revenu mensuel (€)</label><br>
+    <input type="number" id="revenu" value="0"><br><br>
+
+    <label for="budgetInput">Objectif de budget (€)</label><br>
+    <input type="number" id="budgetInput" placeholder="Ex: 1200"><br>
+  </div>
+
+  <!-- 📋 Tableau des dépenses -->
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>🏠 Habitation</th>
+        <th>🚗 Transport</th>
+        <th>🎉 Loisirs</th>
+        <th>💰 Épargne</th>
+        <th>🧮 Total</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+
+  <!-- 🔘 Boutons d'action -->
+  <button id="resetBtn">🔄 Réinitialiser tout</button>
+  <button id="pdfBtn">📄 Créer PDF</button>
+
+  <!-- 💶 Affichage du solde -->
+  <div id="totalDisplay">Total général : 0 €</div>
+
+  <!-- 📊 Graphique circulaire -->
+  <h3>📊 Répartition des dépenses</h3>
+  <canvas id="pieChart" width="400" height="400"></canvas>
+
+<script src="budget-por-mois.js"></script>
+
+</body>
+</html>
