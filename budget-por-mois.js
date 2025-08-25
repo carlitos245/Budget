@@ -43,7 +43,7 @@
     const input = document.createElement("input");
     input.type = "number";
     input.placeholder = "€";
-    input.value = " ";
+    input.value = "0";
     input.max = "1000000";  // ✅ Limite maximale autorisée
     input.setAttribute("maxlength", "7"); // ✅ Limite 6
     
@@ -69,7 +69,7 @@ input.addEventListener("input", () => {
 
   if (!isValidAmount(input.value)) {
     alert("Veuillez entrer un montant valide (ex: 120.50)");
-    input.value = "0";
+    input.value = " ";
   }
 
   const value = parseFloat(input.value);
@@ -261,4 +261,5 @@ return { cell, input };
     totalDisplay.classList.remove("negative");
   }
 }
+
 
