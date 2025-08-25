@@ -1,7 +1,7 @@
   //💻 Script principal 
   
   // 📂 Listes d'options pour chaque catégorie
-  const habitationOptions = ["Loyer", "EDF (électricité)", "Courses", "Téléphone", "Ecole/creche", "Autre"];
+  const habitationOptions = ["Loyer", "EDF (électricité)", "Courses", "Téléphone", "Ecole (creche)", "Autre"];
   const transportOptions = ["Essence", "Assurance", "Ticket stationement", "Carte Navigo", "Autre"];
   const loisirsOptions = ["Cinéma", "Restaurant", "Voyage", "week end", "Activité sportive", "Autre"];
   const epargneOptions = ["Livret A", "PEA", "Crypto", "Épargne retraite", "Assurance vie", "Autres"];
@@ -43,7 +43,7 @@
     const input = document.createElement("input");
     input.type = "number";
     input.placeholder = "€";
-    input.value = "0";
+    input.value = " ";
     input.max = "1000000";  // ✅ Limite maximale autorisée
     input.setAttribute("maxlength", "7"); // ✅ Limite 6
     
@@ -261,3 +261,4 @@ return { cell, input };
     totalDisplay.classList.remove("negative");
   }
 }
+
