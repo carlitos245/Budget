@@ -1,7 +1,7 @@
   //💻 Script principal 
   
   // 📂 Listes d'options pour chaque catégorie
-  const habitationOptions = ["Loyer", "EDF (électricité)", "Courses", "Téléphone", "Ecole (creche)", "Autre"];
+  const habitationOptions = ["Loyer", "EDF", "Courses", "Téléphone", "Ecole", "Autre"];
   const transportOptions = ["Essence", "Assurance", "Ticket stationement", "Carte Navigo", "Autre"];
   const loisirsOptions = ["Cinéma", "Restaurant", "Voyage", "week end", "Activité sportive", "Autre"];
   const epargneOptions = ["Livret A", "PEA", "Crypto", "Épargne retraite", "Assurance vie", "Autres"];
@@ -62,14 +62,29 @@
       localStorage.setItem(`select_${rowIndex}_${colName}`, select.value);
     });
 
+// Limite la longueur à 7 caractères
 input.addEventListener("input", () => {
   if (input.value.length > 7) {
     input.value = input.value.slice(0, 7);
   }
+});
+
+// Vide le champ si la valeur est "0" au focus
+input.addEventListener("focus", () => {
+  if (input.value === "0") {
+    input.value = "";
+  }
+});
+
+// Valide et remet "0" si vide au blur
+input.addEventListener("blur", () => {
+  if (input.value === "") {
+    input.value = "0";
+  }
 
   if (!isValidAmount(input.value)) {
     alert("Veuillez entrer un montant valide (ex: 120.50)");
-    input.value = " ";
+    input.value = "0";
   }
 
   const value = parseFloat(input.value);
@@ -261,5 +276,6 @@ return { cell, input };
     totalDisplay.classList.remove("negative");
   }
 }
+
 
 
