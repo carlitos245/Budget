@@ -217,7 +217,13 @@ return { cell, input };
     doc.setFontSize(14);
     doc.text("Résumé du budget", 10, y);
     y += 10;
-
+    
+    // ✅ Ajouter la date du jour dans le PDF
+    const date = new Date().toLocaleDateString("fr-FR");
+    doc.setFontSize(10);
+    doc.text(`Date : ${date}`, 10, y);
+    y += 10;
+    
     doc.setFontSize(12);
     doc.text(`Revenu mensuel : ${sanitize(revenuInput.value)} €`, 10, y);
     y += 8;
@@ -276,6 +282,7 @@ return { cell, input };
     totalDisplay.classList.remove("negative");
   }
 }
+
 
 
 
