@@ -113,8 +113,11 @@
 
   <!-- 🧾 Formulaire de saisie -->
   <h2>💼 Gestion des dépenses</h2>
+  <div id="dateDisplay"></div><br>
   <div class="form-section">
+    <center>
     <label for="revenu">Revenu mensuel (€)</label><br>
+    </center>
     <input type="number" id="revenu" value="0"><br><br>
 
     <label for="budgetInput">Objectif de budget (€)</label><br>
@@ -148,7 +151,14 @@
   <canvas id="pieChart" width="400" height="400"></canvas>
 
 <script src="budget-por-mois.js"></script>
-
+<!-- ✅ Ajouter la date du jour -->
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+  const date = new Date().toLocaleDateString("fr-FR");
+  document.getElementById("dateDisplay").textContent = "📅 Date : " + date;
+});
+</script>
 </body>
 
 </html>
+
