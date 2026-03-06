@@ -25,6 +25,20 @@
   const revenuInput = document.getElementById("revenu");
   const budgetInput = document.getElementById("budgetInput");
 
+  // Effacer automatiquement le 0
+ revenuInput.addEventListener("focus", () => {
+  if (revenuInput.value === "0") {
+    revenuInput.value = "";
+  }
+});
+ 
+// Remettre 0 si l’utilisateur sort
+revenuInput.addEventListener("blur", () => {
+  if (revenuInput.value.trim() === "") {
+    revenuInput.value = "0";
+  }
+});
+
   let pieChart;
 
   // 🧱 Création d'une cellule avec menu déroulant + champ de saisie
@@ -282,6 +296,7 @@ return { cell, input };
     totalDisplay.classList.remove("negative");
   }
 }
+
 
 
 
