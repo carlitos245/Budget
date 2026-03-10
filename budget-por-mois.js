@@ -1,303 +1,276 @@
-  //💻 Script principal 
-  
-  // 📂 Listes d'options pour chaque catégorie
-  const habitationOptions = ["Loyer", "EDF", "Courses", "Téléphone", "Ecole", "Autre"];
-  const transportOptions = ["Essence", "Assurance", "Ticket stationement", "Carte Navigo", "Autre"];
-  const loisirsOptions = ["Cinéma", "Restaurant", "Voyage", "week end", "Activité sportive", "Autre"];
-  const epargneOptions = ["Livret A", "PEA", "Crypto", "Épargne retraite", "Assurance vie", "Autres"];
+/* ---------------------------------------------------------
+   STOCKAGE LOCAL
+   - On charge les données existantes ou on crée une structure vide
+--------------------------------------------------------- */
+let data = JSON.parse(localStorage.getItem("budget-data1")) || {
+  budget: []
+};
 
-  // 🔐 Fonctions de sécurité
-  function sanitize(text) {
-    return text.replace(/[<>]/g, "");
-  }
-
-  function isValidAmount(value) {
-    return /^\d+(\.\d{1,2})?$/.test(value);
-  }
-
-  function isValidText(value) {
-    return /^[\wÀ-ÿ \-']+$/.test(value);
-  }
-
-  // 🔗 Références DOM
-  const tableBody = document.getElementById("tableBody");
-  const totalDisplay = document.getElementById("totalDisplay");
-  const revenuInput = document.getElementById("revenu");
-  const budgetInput = document.getElementById("budgetInput");
-
-  // Effacer automatiquement le 0
- revenuInput.addEventListener("focus", () => {
-  if (revenuInput.value === "0") {
-    revenuInput.value = "";
-  }
-});
- 
-// Remettre 0 si l’utilisateur sort
-revenuInput.addEventListener("blur", () => {
-  if (revenuInput.value.trim() === "") {
-    revenuInput.value = "0";
-  }
-});
-
-  let pieChart;
-
-  // 🧱 Création d'une cellule avec menu déroulant + champ de saisie
-  function createCategoryCell(optionsArray, rowIndex, colName) {
-    const cell = document.createElement("td");
-
-    const select = document.createElement("select");
-    optionsArray.forEach(opt => {
-      const safeOpt = sanitize(opt);
-      const option = document.createElement("option");
-      option.value = safeOpt;
-      option.textContent = safeOpt;
-      select.appendChild(option);
-    });
-
-    const input = document.createElement("input");
-    input.type = "number";
-    input.placeholder = "€";
-    input.value = "0";
-    input.max = "1000000";  // ✅ Limite maximale autorisée
-    input.setAttribute("maxlength", "7"); // ✅ Limite 6
-    
-    // 🔁 Restauration des valeurs sauvegardées
-    const savedSelect = localStorage.getItem(`select_${rowIndex}_${colName}`);
-    const savedInput = localStorage.getItem(`input_${rowIndex}_${colName}`);
-    if (savedSelect) select.value = savedSelect;
-    if (savedInput) input.value = savedInput;
-
-    // 💾 Sauvegarde + validation
-    select.addEventListener("change", () => {
-      if (!isValidText(select.value)) {
-        alert("Caractère non autorisé dans la sélection !");
-        select.value = optionsArray[0];
-      }
-      localStorage.setItem(`select_${rowIndex}_${colName}`, select.value);
-    });
-
-// Limite la longueur à 7 caractères
-input.addEventListener("input", () => {
-  if (input.value.length > 7) {
-    input.value = input.value.slice(0, 7);
-  }
-});
-
-// Vide le champ si la valeur est "0" au focus
-input.addEventListener("focus", () => {
-  if (input.value === "0") {
-    input.value = "";
-  }
-});
-
-// Valide et remet "0" si vide au blur
-input.addEventListener("blur", () => {
-  if (input.value === "") {
-    input.value = "0";
-  }
-
-  if (!isValidAmount(input.value)) {
-    alert("Veuillez entrer un montant valide (ex: 120.50)");
-    input.value = "0";
-  }
-
-  const value = parseFloat(input.value);
-
-  if (value > 1000000) {
-    alert("Le montant ne peut pas dépasser 1 000 000 €");
-    input.value = "1000000";
-  }
-
-  if (value < 0) {
-    alert("Le montant ne peut pas être négatif");
-    input.value = "0";
-  }
-
-  localStorage.setItem(`input_${rowIndex}_${colName}`, input.value);
-  updateTotals();
-});
-
-cell.appendChild(select);
-cell.appendChild(document.createElement("br"));
-cell.appendChild(input);
-return { cell, input };
-
+/* Sauvegarde dans localStorage */
+function saveData() {
+  localStorage.setItem("budget-data1", JSON.stringify(data));
 }
 
-  // 🧮 Calcul des totaux
-  function updateTotals() {
-    let totalGeneral = 0;
-    for (let i = 0; i < 6; i++) {
-      const row = tableBody.rows[i];
-      let rowTotal = 0;
-      for (let j = 1; j <= 4; j++) {
-        const input = row.cells[j].querySelector("input");
-        const value = parseFloat(input.value) || 0;
-        rowTotal += value;
-      }
-      row.cells[5].textContent = rowTotal.toFixed(2) + " €";
-      totalGeneral += rowTotal;
-    }
-    totalDisplay.textContent = "Total général : " + totalGeneral.toFixed(2) + " €";
-    updateChart();
-    calculerTotal();
+
+/* ---------------------------------------------------------
+   RÉFÉRENCES DOM
+--------------------------------------------------------- */
+const denominationInput = document.getElementById("denomination");
+const creditInput = document.getElementById("credit");
+const debitInput = document.getElementById("debit");
+const dateInput = document.getElementById("task-date");
+const addBtn = document.getElementById("add-task");
+const list = document.getElementById("task-list");
+const soldeGlobal = document.getElementById("solde-global");
+
+
+/* ---------------------------------------------------------
+   MISE À JOUR DU SOLDE GLOBAL
+   - Le solde global = total de la dernière ligne
+--------------------------------------------------------- */
+function updateSoldeGlobal() {
+  let solde = 0;
+
+  if (data.budget.length > 0) {
+    solde = data.budget[data.budget.length - 1].total;
   }
 
-  // 📊 Mise à jour du graphique
-  function updateChart() {
-    const categories = ["Habitation", "Transport", "Loisirs", "Épargne"];
-    const totals = [0, 0, 0, 0];
-    for (let i = 0; i < 6; i++) {
-      const row = tableBody.rows[i];
-      for (let j = 1; j <= 4; j++) {
-        const input = row.cells[j].querySelector("input");
-        const value = parseFloat(input.value) || 0;
-        totals[j - 1] += value;
-      }
-    }
+  soldeGlobal.textContent = "Solde actuel : " + solde;
+}
 
-    if (pieChart) {
-      pieChart.data.datasets[0].data = totals;
-      pieChart.update();
-    } else {
-      const ctx = document.getElementById("pieChart").getContext("2d");
-      pieChart = new Chart(ctx, {
-        type: "pie",
-        data: {
-          labels: categories,
-          datasets: [{
-            data: totals,
-            backgroundColor: ["#FF6384", "#36A2EB", "#FFCE56", "#8BC34A"]
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { position: "bottom" },
-            title: { display: true, text: "Répartition des dépenses par catégorie" }
-          }
-        }
-      });
-    }
+
+/* ---------------------------------------------------------
+   AJOUT D’UNE NOUVELLE LIGNE BUDGET
+   - Calcule le mouvement (crédit - débit)
+   - Ajoute au total cumulatif précédent
+--------------------------------------------------------- */
+addBtn.addEventListener("click", () => {
+  const denomination = denominationInput.value.trim();
+  const credit = Number(creditInput.value) || 0;
+  const debit = Number(debitInput.value) || 0;
+  const date = dateInput.value;
+
+  // Vérification minimale
+  if (!denomination || !date) {
+    alert("Veuillez remplir au moins la dénomination et la date.");
+    return;
   }
 
-  // 🚀 Initialisation au chargement
-  window.onload = () => {
-    const savedRevenu = localStorage.getItem("revenu");
-    const savedBudget = localStorage.getItem("budget");
-    if (savedRevenu) revenuInput.value = savedRevenu;
-    if (savedBudget) budgetInput.value = savedBudget;
+  // Calcul du mouvement de la ligne
+  const mouvement = credit - debit;
 
-    for (let i = 0; i < 6; i++) {
-      const row = document.createElement("tr");
-      const lineCell = document.createElement("td");
-      lineCell.textContent = i + 1;
-      row.appendChild(lineCell);
+  // Récupération du total cumulatif précédent
+  const dernierTotal = data.budget.length > 0
+    ? data.budget[data.budget.length - 1].total
+    : 0;
 
-      const habitation = createCategoryCell(habitationOptions, i, "habitation");
-      const transport = createCategoryCell(transportOptions, i, "transport");
-      const loisirs = createCategoryCell(loisirsOptions, i, "loisirs");
-      const epargne = createCategoryCell(epargneOptions, i, "epargne");
+  // Nouveau total cumulatif
+  const totalCumule = dernierTotal + mouvement;
 
-      row.appendChild(habitation.cell);
-      row.appendChild(transport.cell);
-      row.appendChild(loisirs.cell);
-      row.appendChild(epargne.cell);
-
-      const totalCell = document.createElement("td");
-      totalCell.textContent = "0 €";
-      row.appendChild(totalCell);
-
-      tableBody.appendChild(row);
-    }
-
-    updateTotals();
+  // Création de l'entrée
+  const entry = {
+    id: crypto.randomUUID(),
+    denomination,
+    credit,
+    debit,
+    total: totalCumule,
+    date
   };
 
-  // 🔄 Réinitialisation
-  document.getElementById("resetBtn").addEventListener("click", () => {
-    if (confirm("Voulez-vous vraiment tout réinitialiser ?")) {
-      localStorage.clear();
-      location.reload();
-    }
+  // Ajout dans les données
+  data.budget.push(entry);
+  saveData();
+
+  // Mise à jour de l'affichage
+  render();
+
+  // Réinitialisation des champs
+  denominationInput.value = "";
+  creditInput.value = "";
+  debitInput.value = "";
+  dateInput.value = "";
+});
+
+
+/* ---------------------------------------------------------
+   AFFICHAGE DU TABLEAU
+   - Recalcule tout le cumul après suppression
+   - Affiche chaque ligne dans un <tr>
+--------------------------------------------------------- */
+function render() {
+  list.innerHTML = "";
+
+  // Recalcul complet du cumul pour garantir la cohérence
+  let cumul = 0;
+  data.budget = data.budget.map(item => {
+    const mouvement = item.credit - item.debit;
+    cumul += mouvement;
+    return { ...item, total: cumul };
   });
 
-  // 📄 Export PDF sécurisé
-  document.getElementById("pdfBtn").addEventListener("click", async () => {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
+  saveData();
 
-    let y = 10;
-    doc.setFontSize(14);
-    doc.text("Résumé du budget", 10, y);
-    y += 10;
-    
-    // ✅ Ajouter la date du jour dans le PDF
-    const date = new Date().toLocaleDateString("fr-FR");
-    doc.setFontSize(10);
-    doc.text(`Date : ${date}`, 10, y);
-    y += 10;
-    
-    doc.setFontSize(12);
-    doc.text(`Revenu mensuel : ${sanitize(revenuInput.value)} €`, 10, y);
-    y += 8;
-    doc.text(`Objectif de budget : ${sanitize(budgetInput.value)} €`, 10, y);
-    y += 10;
+  // Création des lignes du tableau
+  data.budget.forEach(item => {
+    const tr = document.createElement("tr");
 
-    doc.text("Détails par ligne :", 10, y);
-    y += 8;
+    tr.innerHTML = `
+      <td>${item.denomination}</td>
+      <td>${item.credit}</td>
+      <td>${item.debit}</td>
+      <td>${item.total}</td>
+      <td>${item.date}</td>
+      <td><button class="delete-btn" data-id="${item.id}">✕</button></td>
+    `;
 
-    for (let i = 0; i < 6; i++) {
-      const row = tableBody.rows[i];
-      let lineText = `Ligne ${i + 1} : `;
-      for (let j = 1; j <= 4; j++) {
-        const select = sanitize(row.cells[j].querySelector("select").value);
-        const input = sanitize(row.cells[j].querySelector("input").value);
-        lineText += `${select} - ${input} € | `;
-      }
-      const total = sanitize(row.cells[5].textContent);
-      lineText += `Total : ${total}`;
-      doc.text(lineText, 10, y);
-      y += 8;
-    }
+    // Suppression
+    tr.querySelector(".delete-btn").addEventListener("click", () => {
+      deleteEntry(item.id);
+    });
 
-    y += 5;
-    doc.text(sanitize(totalDisplay.textContent), 10, y);
-    y += 10;
-
-    const canvas = document.getElementById("pieChart");
-    const imgData = canvas.toDataURL("image/png");
-    doc.addImage(imgData, "PNG", 10, y, 100, 100);
-
-    doc.save("budget.pdf");
+    list.appendChild(tr);
   });
 
-  // 🔍 Calcul du solde
-  function calculerTotal() {
-    const revenu = parseFloat(revenuInput.value) || 0;
-    localStorage.setItem("revenu", revenu);
-
-      let totalDepenses = 0;
-  const depensesInputs = document.querySelectorAll("#tableBody input[type='number']");
-
-  depensesInputs.forEach((input, index) => {
-    const val = parseFloat(input.value) || 0;
-    totalDepenses += val;
-    localStorage.setItem("depense_" + index, val); // sauvegarde automatique
-  });
-
-  const solde = revenu - totalDepenses;
-  totalDisplay.textContent = `Solde restant : ${solde.toFixed(2)} €`;
-
-  if (solde < 0) {
-        totalDisplay.classList.add("negative");
-    alert("⚠️ Attention : votre solde est négatif !");
-  } else {
-    totalDisplay.classList.remove("negative");
-  }
+  // Mise à jour du solde global
+  updateSoldeGlobal();
 }
 
 
+/* ---------------------------------------------------------
+   SUPPRESSION D’UNE LIGNE
+   - Supprime l'entrée
+   - Recalcule tout le cumul
+--------------------------------------------------------- */
+function deleteEntry(id) {
+  data.budget = data.budget.filter(e => e.id !== id);
+  saveData();
+  render();
+}
+
+/* ---------------------------------------------------------
+   BOUTON RESET GLOBAL (ID UNIQUE)
+   - Efface toutes les données du budget
+   - Recharge la page
+--------------------------------------------------------- */
+document.getElementById("budget-reset-btn1").addEventListener("click", () => {
+  if (confirm("Voulez-vous vraiment tout réinitialiser ?")) {
+    localStorage.removeItem("budget-data1");  // Supprime les données du budget
+    location.reload();                       // Recharge la page
+  }
+});
+
+// ------------------------------------------------------------- 
+// 📌 EXPORT PDF — Génération du PDF du budget 
+// ------------------------------------------------------------- 
+// On attend que la page soit chargée pour éviter que jsPDF soit undefined
+document.addEventListener("DOMContentLoaded", () => {
+
+    document.getElementById("pdfBtn").addEventListener("click", () => {
+
+        // Récupération jsPDF
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        let y = 10;
+
+        // ---------------------------------------------------------
+        // 🟦 TITRE
+        // ---------------------------------------------------------
+        doc.setFontSize(18);
+        doc.text("Résumé du budget", 10, y);
+        y += 10;
+
+        // ---------------------------------------------------------
+        // 🟩 SOLDE GLOBAL
+        // ---------------------------------------------------------
+        const solde = document.getElementById("solde-global").textContent;
+        doc.setFontSize(14);
+        doc.text(solde, 10, y);
+        y += 10;
+
+        // ---------------------------------------------------------
+        // 🟧 TABLEAU FORMATÉ AVEC autoTable
+        // ---------------------------------------------------------
+
+        // En-têtes du tableau
+        const head = [["Dénomination", "Crédit (€)", "Débit (€)", "Total (€)", "Date"]];
+
+        // Lignes du tableau
+        const body = [];
+
+        document.querySelectorAll(".budget-table tbody tr").forEach(row => {
+            const denomination = row.cells[0].textContent;
+            const credit = row.cells[1].textContent;
+            const debit = row.cells[2].textContent;
+            const total = row.cells[3].textContent;
+            const date = row.cells[4].textContent;
+
+            body.push([denomination, credit, debit, total, date]);
+        });
+
+        // ---------------------------------------------------------
+        // 🟦 autoTable resutl PDF avec couleurs crédit/débit
+        // ---------------------------------------------------------
+        doc.autoTable({
+    // Position verticale où commence le tableau
+    startY: y,
+
+    // En‑têtes du tableau (ligne du haut)
+    head: head,
+
+    // Contenu du tableau (toutes les lignes)
+    body: body,
+
+    // Styles généraux appliqués à TOUTES les cellules
+    styles: {
+        fontSize: 10,      // Taille du texte
+        cellPadding: 3     // Marges internes des cellules
+    },
+
+    // Styles appliqués UNIQUEMENT à la ligne d’en‑tête
+    headStyles: {
+        fillColor: [100, 170, 255], // 🎨(bleu foncé actuel) [41, 128, 185]
+                                   // Bleu clair : [100, 170, 255] Bleu pastel : [150, 200, 255]
+                                   //Bleu très doux : [180, 220, 255] Bleu flat design : [52, 152, 219]
+                                   // ex : [100, 170, 255] = bleu clair
+        textColor: 255,            // Couleur du texte (255 = blanc)
+        halign: "center"           // Alignement horizontal du texte
+    },
+
+    // Styles appliqués à toutes les lignes du tableau (sauf en‑tête)
+    bodyStyles: {
+        halign: "center"           // Centre le texte dans les cellules
+    },
+
+    // Fonction appelée pour CHAQUE cellule du tableau
+    // Permet de modifier dynamiquement les couleurs
+    didParseCell: function (data) {
+
+        // Colonne Crédit (index 1)
+        // Si la valeur n'est pas "0", on met en vert
+        if (data.column.index === 1 && data.cell.raw !== "0") {
+            data.cell.styles.textColor = [0, 150, 0]; // Vert
+        }
+
+        // Colonne Débit (index 2)
+        // Si la valeur n'est pas "0", on met en rouge
+        if (data.column.index === 2 && data.cell.raw !== "0") {
+            data.cell.styles.textColor = [200, 0, 0]; // Rouge
+        }
+    }
+});
 
 
+        // ---------------------------------------------------------
+        // 🟪 SAUVEGARDE
+        // ---------------------------------------------------------
+        doc.save("budget.pdf");
+    });
+
+});
+
+/* ---------------------------------------------------------
+   PREMIER AFFICHAGE AU CHARGEMENT
+--------------------------------------------------------- */
+render();
 
