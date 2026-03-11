@@ -108,3 +108,9 @@
   font-size: 16px;
   border-bottom: 1px solid #ddd;
 }
+.label-date {
+  font-weight: 700;
+  font-size: 17px;
+  color: #222;
+}
+
