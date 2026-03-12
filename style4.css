@@ -97,10 +97,6 @@
   font-size: 18px;
 }
 
-.budget-table :hover{
- background: #707b7c; 
-}
-
 /* CELLULES ESPACÉES */
 .budget-table td {
   background: white;
@@ -121,6 +117,7 @@
   color: #222;
   margin-bottom: 8px;
 }
+
 
 
 
