@@ -45,7 +45,7 @@ function updateSoldeGlobal() {
    - Ajoute au total cumulatif précédent
 --------------------------------------------------------- */
 addBtn.addEventListener("click", () => {
-  const denomination = denominationInput.value.trim();
+  const denomination = escapeHTML(denominationInput.value.trim());
   const credit = Number(creditInput.value) || 0;
   const debit = Number(debitInput.value) || 0;
   const date = dateInput.value;
@@ -100,7 +100,7 @@ addBtn.addEventListener("click", () => {
 function render() {
   list.innerHTML = "";
 
-  // Recalcul complet du cumul pour garantir la cohérence
+  // Recalcul complet du cumul
   let cumul = 0;
   data.budget = data.budget.map(item => {
     const mouvement = item.credit - item.debit;
@@ -114,27 +114,40 @@ function render() {
   data.budget.forEach(item => {
     const tr = document.createElement("tr");
 
-    tr.innerHTML = `
-      <td>${item.denomination}</td>
-      <td>${item.credit}</td>
-      <td>${item.debit}</td>
-      <td>${item.total}</td>
-      <td>${item.date}</td>
-      <td><button class="delete-btn" data-id="${item.id}">✕</button></td>
-    `;
+    const tdDenom = document.createElement("td");
+    tdDenom.textContent = item.denomination;
 
-    // Suppression
-    tr.querySelector(".delete-btn").addEventListener("click", () => {
-      deleteEntry(item.id);
-    });
+    const tdCredit = document.createElement("td");
+    tdCredit.textContent = item.credit;
+
+    const tdDebit = document.createElement("td");
+    tdDebit.textContent = item.debit;
+
+    const tdTotal = document.createElement("td");
+    tdTotal.textContent = item.total;
+
+    const tdDate = document.createElement("td");
+    tdDate.textContent = item.date;
+
+    const tdDelete = document.createElement("td");
+    const btn = document.createElement("button");
+    btn.classList.add("delete-btn");
+    btn.textContent = "✕";
+    btn.onclick = () => deleteEntry(item.id);
+    tdDelete.appendChild(btn);
+
+    tr.appendChild(tdDenom);
+    tr.appendChild(tdCredit);
+    tr.appendChild(tdDebit);
+    tr.appendChild(tdTotal);
+    tr.appendChild(tdDate);
+    tr.appendChild(tdDelete);
 
     list.appendChild(tr);
   });
 
-  // Mise à jour du solde global
   updateSoldeGlobal();
 }
-
 
 /* ---------------------------------------------------------
    SUPPRESSION D’UNE LIGNE
@@ -274,3 +287,11 @@ document.addEventListener("DOMContentLoaded", () => {
 --------------------------------------------------------- */
 render();
 
+function escapeHTML(str) {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
